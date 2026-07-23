@@ -1,9 +1,15 @@
 from datasets import load_dataset
 from sklearn.model_selection import train_test_split
 from transformers import BertTokenizer, BertForSequenceClassification, Trainer, TrainingArguments
-from sklearn.metrics import accuracy_score, f1_score
+from sklearn.metrics import accuracy_score, f1_score, confusion_matrix, classification_report
 import torch
 import os
+import time
+import numpy as np
+import seaborn as sns
+import matplotlib
+matplotlib.use('Agg')  # Non-interactive backend for saving plots
+import matplotlib.pyplot as plt
 
 # Load the emotion dataset from Hugging Face
 dataset = load_dataset('emotion')
@@ -55,9 +61,8 @@ training_args = TrainingArguments(
     per_device_eval_batch_size=16,
     warmup_steps=500,
     weight_decay=0.2,
-    logging_dir='./logs',
     logging_steps=10,
-    evaluation_strategy="steps",
+    eval_strategy="steps",
     eval_steps=100,
     save_strategy="epoch",
 )
@@ -72,12 +77,41 @@ trainer = Trainer(
 )
 
 # Train the model
+start_time = time.time()
 trainer.train()
+training_time = time.time() - start_time
+print(f"\nTraining completed in {training_time:.2f} seconds ({training_time/60:.2f} minutes)")
 
 # Evaluate the model and print accuracy
 eval_results = trainer.evaluate(eval_dataset=val_dataset)
-print("Evaluation Results:", eval_results)
-print("Accuracy:", eval_results["eval_accuracy"])
+print("\nEvaluation Results:", eval_results)
+print(f"Accuracy: {eval_results['eval_accuracy']:.4f}")
+print(f"F1 Score: {eval_results['eval_f1']:.4f}")
+
+# Generate predictions for confusion matrix and classification report
+emotion_labels = ['sadness', 'joy', 'love', 'anger', 'fear', 'surprise']
+predictions = trainer.predict(val_dataset)
+preds = predictions.predictions.argmax(-1)
+labels = predictions.label_ids
+
+# Print classification report
+print("\n" + "="*60)
+print("Classification Report:")
+print("="*60)
+print(classification_report(labels, preds, target_names=emotion_labels))
+
+# Generate and save confusion matrix
+cm = confusion_matrix(labels, preds)
+plt.figure(figsize=(10, 8))
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
+            xticklabels=emotion_labels,
+            yticklabels=emotion_labels)
+plt.title('Confusion Matrix - EmotiSense Emotion Classification')
+plt.xlabel('Predicted Emotion')
+plt.ylabel('True Emotion')
+plt.tight_layout()
+plt.savefig('./confusion_matrix.png', dpi=150)
+print("\nConfusion matrix saved to ./confusion_matrix.png")
 
 # Save the model and tokenizer
 model_save_path = './emotion_model'

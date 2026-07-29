@@ -1,6 +1,6 @@
-# EmotiSense
 
-**EmotiSense** is a mental health and emotion classification tool powered by a fine-tuned **BERT (`bert-base-uncased`)** sequence classification model. It achieves **94% accuracy** on the Hugging Face `emotion` dataset across 6 core emotion classes: *sadness*, *joy*, *love*, *anger*, *fear*, and *surprise*.
+
+This is a mental health and emotion classification tool powered by a fine-tuned **BERT (`bert-base-uncased`)** sequence classification model. It achieves **94% accuracy** on the Hugging Face `emotion` dataset across 6 core emotion classes: *sadness*, *joy*, *love*, *anger*, *fear*, and *surprise*.
 
 The project combines a Flask backend for real-time inference with an intuitive Bootstrap-based web interface.
 
